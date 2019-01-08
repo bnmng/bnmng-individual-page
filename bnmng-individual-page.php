@@ -2,7 +2,7 @@
 /*
 Plugin Name: Individual Page
 Plugin URL: http://individualpage.bnmng.com
-Description: Opens the post content as an independent html page without the WP framework
+Description: Opens the post content as an independent html page without the WP framework.  Settings are under the Appearance menu.
 Version: 1.1
 Author: Benjamin Goldberg
 Author URI: https://bnmng.com
@@ -177,7 +177,6 @@ function bnmng_individual_page_javascript() { ?>
 
 add_action( 'wp_footer', 'bnmng_individual_page_javascript' );
 
-
 function bnmng_individual_page_ajax() {
 
 	$post = false;
@@ -285,7 +284,7 @@ add_action( 'wp_ajax_bnmng_individual_page', 'bnmng_individual_page_ajax' );
  * Add the options page using function bnmng_individual_page_options
  */
 function bnmng_individual_page_menu() {
-		add_options_page( 'Individual Pages', 'Individual Pages', 'manage_options', 'bnmng-individual-page', 'bnmng_individual_page_options' );
+		add_theme_page( 'Individual Pages', 'Individual Pages', 'manage_options', 'bnmng-individual-page', 'bnmng_individual_page_options' );
 }
 add_action( 'admin_menu', 'bnmng_individual_page_menu' );
 
