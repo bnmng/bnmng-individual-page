@@ -2,7 +2,7 @@
 /*
 Plugin Name: Individual Page
 Plugin URL: http://individualpage.bnmng.com
-Description: Opens the post content as an html file in a individual page
+Description: Opens the post content as an independent html page without the WP framework
 Version: 1.1
 Author: Benjamin Goldberg
 Author URI: https://bnmng.com
@@ -73,7 +73,7 @@ function bnmng_individual_page_shortcode( $atts ) {
 add_shortcode( 'individual_page', 'bnmng_individual_page_shortcode' );
 
 /*
- * Place the javascript in the header of page 
+ * Place the javascript at the end of page 
  */
 function bnmng_individual_page_javascript() { ?>
 <script type="text/javascript" >
@@ -228,8 +228,14 @@ function bnmng_individual_page_ajax() {
 					if ( isset( $set['page_header'] ) ) {
 						$page_header = wp_kses_post( $set['page_header'] );
 					}
+					if ( isset( $set['page_header_autop'] ) ) {
+						$page_header_autop = true;
+					}
 					if ( isset( $set['page_footer'] ) ) {
 						$page_footer = wp_kses_post( $set['page_footer'] );
+					}
+					if ( isset( $set['page_footer_autop'] ) ) {
+						$page_footer_autop = true;
 					}
 				}
 			}
@@ -249,13 +255,19 @@ function bnmng_individual_page_ajax() {
 	if( '' < $css_url ) {
 		$response .= '	<css_url_' . $stamp . '>' . $css_url . '</css_url_' . $stamp . '>' . "\n";
 	}
-	if( '' < $css_head ) {
+	if ( '' < $css_head ) {
 		$response .= '	<css_head_' . $stamp . '>' . $css_head . '</css_head_' . $stamp . '>' . "\n";
 	}
-	if( '' < $page_header ) {
+	if ( '' < $page_header ) {
+		if ( isset( $page_header_autop ) ) {
+			$page_header = wpautop( $page_header );
+		}
 		$response .= '	<page_header_' . $stamp . '>' . $page_header . '</page_header_' . $stamp . '>' . "\n";
 	}
-	if( '' < $page_footer ) {
+	if ( '' < $page_footer ) {
+		if ( isset( $page_footer_autop ) ) {
+			$page_footer = wpautop( $page_footer );
+		}
 		$response .= '	<page_footer_' . $stamp . '>' . $page_footer . '</page_footer_' . $stamp . '>' . "\n";
 	}
 
@@ -273,7 +285,7 @@ add_action( 'wp_ajax_bnmng_individual_page', 'bnmng_individual_page_ajax' );
  * Add the options page using function bnmng_individual_page_options
  */
 function bnmng_individual_page_menu() {
-		add_options_page( 'Individual Page Options', 'Individual Page', 'manage_options', 'bnmng-individual-page', 'bnmng_individual_page_options' );
+		add_options_page( 'Individual Pages', 'Individual Pages', 'manage_options', 'bnmng-individual-page', 'bnmng_individual_page_options' );
 }
 add_action( 'admin_menu', 'bnmng_individual_page_menu' );
 
@@ -320,7 +332,6 @@ function bnmng_individual_page_save_options() {
 						$save_set['link_text'] = wp_strip_all_tags( $posted_set['link_text'] );
 					}
 
-
 					if ( isset( $posted_set['css_url'] ) ) {
 						$save_set['css_url'] = esc_url_raw( $posted_set['css_url'] );
 					}
@@ -333,10 +344,17 @@ function bnmng_individual_page_save_options() {
 						$save_set['page_header'] = wp_kses_post( $posted_set['page_header'] );
 					}
 
+					if ( isset( $posted_set['page_header_autop'] ) ) {
+						$save_set['page_header_autop'] = true;
+					}
+
 					if ( isset( $posted_set['page_footer'] ) ) {
 						$save_set['page_footer'] = wp_kses_post( $posted_set['page_footer'] );
 					}
 
+					if ( isset( $posted_set['page_footer_autop'] ) ) {
+						$save_set['page_footer_autop'] = true;
+					}
 
 					$options['sets'][ $save_sets_lap ] = $save_set;
 				
@@ -351,9 +369,8 @@ function bnmng_individual_page_save_options() {
 			if ( '' < $new_set_set_name ) {
 				$save_set = array();
 				$save_set['set_name'] = $new_set_set_name;
-				$save_set['css_url'] = '';
-				$save_set['css_head'] = '';
-				$save_set['link_style'] = '';
+				$save_set['page_header_autop'] = 'on';
+				$save_set['page_footer_autop'] = 'on';
 
 				$options['sets'][ $save_sets_lap ] = $save_set;
 			}
@@ -379,38 +396,42 @@ function bnmng_individual_page_display_options() {
 	$intro .= __( 'HTML and shortcodes may be used.  Tags opened above post content can be closed below. ', 'bnmng-individual-page' );
 	$intro .= ' </p>';
 
-	$set_label              = 'Style %1$d';
-	$show_help_label        = __( 'Show Help', 'bnmng-individual-page' );
-	$up_label               = __( 'Up', 'bnmng-individual-page' );
-	$down_label             = __( 'Down', 'bnmng-individual-page' );
-	$delete_label           = __( 'Delete', 'bnmng-individual-page' );
-	$set_name_label         = __( 'Set Name', 'bnmng-individual-page' );
-	$set_name_help          = __( 'To add a new style set, type a new set name and click "Save Changes" ', 'bnmng-individual-page' );
-	$set_name_help         .= __( 'The new set name should not have spaces or unusual characters. examples: "MainStyle", "Politics", "Official_Letters"', 'bnmng-individual-page' );
-	$shortcode_label        = __( 'Shortcode to Use', 'bnmng-individual-page' );
-	$shortcode_help         = __( 'This is the shortcode that you will use in your post or page. ', 'bnmng-individual-page' );
-	$link_style_label       = __( 'Link Style', 'bnmng-individual-page' );
-	$link_style_help        = __( 'The style attribute for the link which opens the page. ', 'bnmng-individual-page' );
-	$link_style_help       .= __( 'This is for the link that appears in your post - it doesn\'t affect the individual page.  ', 'bnmng-individual-page' );
-	$link_text_label       = __( 'Link Text', 'bnmng-individual-page' );
-	$link_text_help        = __( 'The text for the link which opens the page, which, if left blank, will be "Individual Page". ', 'bnmng-individual-page' );
-	$link_text_help       .= __( 'This is for the link that appears in your post - it doesn\'t affect the individual page.  ', 'bnmng-individual-page' );
-	$css_url_label          = __( 'External Stylesheet', 'bnmng-individual-page' );
-	$css_url_help           = __( 'The URL of an external stylesheet for your page. ', 'bnmng-individual-page' );
-	$css_url_help          .= __( 'This is what goes in the tag &lt;link rel="stylesheet" ... in the document head. ', 'bnmng-individual-page' );
-	$css_head_label         = __( 'CSS in Head', 'bnmng-individual-page' );
-	$css_head_help          = __( 'This is what goes between the &lt;style&gt; and &lt;/style&gt; tags in the document head. ', 'bnmng-individual-page' );
-	$page_header_label      = __( ' Page Header', 'bnmng-individual-page' );
-	$page_header_help       = __( 'If filled in, this text will create a &lt;header&gt; element immediately below the opening &lt;body&gt; tag, with whatever you place here between the &lt;header&gt; and &lt;/header&gt; tags', 'bnmng-individual-page' );
-	$page_footer_label      = __( ' Page Footer', 'bnmng-individual-page' );
-	$page_footer_help       = __( 'If filled in, this text will create a &lt;footer&gt; element immediately above the closing &lt;/body&gt; tag, with whatever you place here between the &lt;footer&gt; and &lt;/footer&gt; tags', 'bnmng-individual-page' );
-	$new_set_label          = __( 'Add a new set', 'bnmng-individual-page' );
-	$controlname_pat        = $option_name . '[sets][%1$d][%2$s]';
-	$controlid_pat          = $option_name . '_%1$d_%2$s';
-	$multicontrolname_pat   = $option_name . '[sets][%1$d][%2$s][%3$s][]';
-	$multicontrolid_pat     = $option_name . '_%1$d_%2$s_%3$s';
-	$global_controlname_pat = $option_name . '[%1$s]';
-	$global_controlid_pat   = $option_name . '_%1$s';
+	$set_label                 = 'Style %1$d';
+	$help_label                = __( 'Show Help', 'bnmng-individual-page' );
+	$up_label                  = __( 'Up', 'bnmng-individual-page' );
+	$down_label                = __( 'Down', 'bnmng-individual-page' );
+	$delete_label              = __( 'Delete', 'bnmng-individual-page' );
+	$set_name_label            = __( 'Set Name', 'bnmng-individual-page' );
+	$set_name_help             = __( 'To add a new style set, type a new set name and click "Save Changes" ', 'bnmng-individual-page' );
+	$set_name_help            .= __( 'The new set name should not have spaces or unusual characters. examples: "MainStyle", "Politics", "Official_Letters"', 'bnmng-individual-page' );
+	$shortcode_label           = __( 'Shortcode to Use', 'bnmng-individual-page' );
+	$shortcode_help            = __( 'This is the shortcode that you will use in your post or page. ', 'bnmng-individual-page' );
+	$link_style_label          = __( 'Link Style', 'bnmng-individual-page' );
+	$link_style_help           = __( 'The style attribute for the link which opens the page. ', 'bnmng-individual-page' );
+	$link_style_help          .= __( 'This is for the link that appears in your post - it doesn\'t affect the individual page.  ', 'bnmng-individual-page' );
+	$link_text_label           = __( 'Link Text', 'bnmng-individual-page' );
+	$link_text_help            = __( 'The text for the link which opens the page, which, if left blank, will be "Individual Page". ', 'bnmng-individual-page' );
+	$link_text_help           .= __( 'This is for the link that appears in your post - it doesn\'t affect the individual page.  ', 'bnmng-individual-page' );
+	$css_url_label             = __( 'External Stylesheet', 'bnmng-individual-page' );
+	$css_url_help              = __( 'The URL of an external stylesheet for your page. ', 'bnmng-individual-page' );
+	$css_url_help             .= __( 'This is what goes in the tag &lt;link rel="stylesheet" ... in the document head. ', 'bnmng-individual-page' );
+	$css_head_label            = __( 'CSS in Head', 'bnmng-individual-page' );
+	$css_head_help             = __( 'This is what goes between the &lt;style&gt; and &lt;/style&gt; tags in the document head. ', 'bnmng-individual-page' );
+	$page_header_label         = __( 'Page Header', 'bnmng-individual-page' );
+	$page_header_help          = __( 'If filled in, this text will create a &lt;header&gt; element immediately below the opening &lt;body&gt; tag, with whatever you place here between the &lt;header&gt; and &lt;/header&gt; tags', 'bnmng-individual-page' );
+	$page_header_autop_label   = __( 'Page Header Auto &lt;p&gt;', 'bnmng-individual-page' );
+	$page_header_autop_help    = __( 'If checked, html paragraphs and breaks will be added to the ends of lines ', 'bnmng-individual-page' );
+	$page_footer_label         = __( 'Page Footer', 'bnmng-individual-page' );
+	$page_footer_help          = __( 'If , this text will create a &lt;footer&gt; element immediately above the closing &lt;/body&gt; tag, with whatever you place here between the &lt;footer&gt; and &lt;/footer&gt; tags', 'bnmng-individual-page' );
+	$page_footer_autop_label   = __( 'Page Footer Auto &lt;p&gt;', 'bnmng-individual-page' );
+	$page_footer_autop_help    = __( 'If checked, html paragraphs and breaks will be added to the ends of lines ', 'bnmng-individual-page' );
+	$new_set_label             = __( 'Add a new set', 'bnmng-individual-page' );
+	$controlname_pat           = $option_name . '[sets][%1$d][%2$s]';
+	$controlid_pat             = $option_name . '_%1$d_%2$s';
+	$multicontrolname_pat      = $option_name . '[sets][%1$d][%2$s][%3$s][]';
+	$multicontrolid_pat        = $option_name . '_%1$d_%2$s_%3$s';
+	$global_controlname_pat    = $option_name . '[%1$s]';
+	$global_controlid_pat      = $option_name . '_%1$s';
 
 	echo "\n";
 	echo '<div class = "wrap">', "\n";
@@ -434,6 +455,7 @@ function bnmng_individual_page_display_options() {
 			echo '					', sprintf( $set_label, ( $saved_set_key + 1 ) ), "\n";
 			echo '				</div>', "\n";
 			echo '				<div class="set_buttons">', "\n";
+			echo '					<button type="button" name="toggle_help" data-key="' . $saved_set_key . '" >', $help_label, '</button>', "\n";
 			if ( $saved_set_key > 0 ) {
 				echo '					<button type="button" name="move_up" data-key="' . $saved_set_key . '" >', $up_label, '</button>', "\n";
 			}
@@ -537,6 +559,20 @@ function bnmng_individual_page_display_options() {
 			echo '					</tr>', "\n";
 
 			echo '					<tr>', "\n";
+			echo '						<th>', $page_header_autop_label, '</th>', "\n";
+			echo '						<td>', "\n";
+			echo '							<div>', "\n";
+			echo '								<input type="checkbox" id="', sprintf( $controlid_pat, $saved_set_key, 'page_header_autop' ), '" name="', sprintf( $controlname_pat, $saved_set_key, 'page_header_autop' ), '" ';
+			if ( isset( $saved_set['page_header_autop'] ) ) {
+				echo 'checked = "checked" ';
+			}
+			echo '>', "\n";
+			echo '							</div>', "\n";
+			echo '							<div class="bnmng-individual-page-help">', $page_header_autop_help, '</div>', "\n";
+			echo '						</td>', "\n";
+			echo '					</tr>', "\n";
+
+			echo '					<tr>', "\n";
 			echo '						<th>', $page_footer_label, '</th>', "\n";
 			echo '						<td>', "\n";
 			echo '							<div>', "\n";
@@ -550,6 +586,21 @@ function bnmng_individual_page_display_options() {
 			echo '						</td>', "\n";
 			echo '					</tr>', "\n";
 
+			echo '					<tr>', "\n";
+			echo '						<th>', $page_footer_autop_label, '</th>', "\n";
+			echo '						<td>', "\n";
+			echo '							<div>', "\n";
+			echo '								<input type="checkbox" id="', sprintf( $controlid_pat, $saved_set_key, 'page_footer_autop' ), '" name="', sprintf( $controlname_pat, $saved_set_key, 'page_footer_autop' ), '" ';
+			if ( isset( $saved_set['page_footer_autop'] ) ) {
+				echo 'checked = "checked" ';
+			}
+			echo '>', "\n";
+			echo '							</div>', "\n";
+			echo '							<div class="bnmng-individual-page-help">', $page_footer_autop_help, '</div>', "\n";
+			echo '						</td>', "\n";
+			echo '					</tr>', "\n";
+
+
 			echo '				</table>', "\n";
 			echo '			</div>', "\n";
 			echo '		</div>', "\n";
@@ -559,20 +610,27 @@ function bnmng_individual_page_display_options() {
 		$saved_sets_sum = 0;
 	}
 
-	echo '		<div id="div_add_set">', "\n";
+	echo '		<div class="set_header">', "\n";
+	echo '			<div class="set_label">', "\n";
+	echo '				Add', "\n";
+	echo '			</div>', "\n";
+	echo '			<div class="set_buttons">', "\n";
+	echo '				<button type="button" name="toggle_help" data-key="add" >', $help_label, '</button>', "\n";
+	echo '			</div>', "\n";
+	echo '		</div>', "\n";
+	echo '		<div id="div_set_add">', "\n";
 	echo '			<table class="form-table bnmng-individual-page">', "\n";
 	echo '				<tr>', "\n";
-	echo '					<th>Add a New Style Set</th>', "\n";
+	echo '					<th colspan="2">Add a New Style Set</th>', "\n";
+	echo '				</tr>', "\n";
+	echo '				<tr>', "\n";
+	echo ' 					<th>', "\n";
+	echo '						', $set_name_label, "\n";
+	echo '					</th>', "\n";	
 	echo '					<td>', "\n";
-	echo '						<table class="form-table bnmng-individual-page">', "\n";
-	echo '							<tr>', "\n";
-	echo '								<td>Set Name</td>', "\n";
-	echo '								<td>', "\n";
-	echo '									<input type="text" id="', sprintf( $global_controlid_pat, 'new_set_set_name_', $set_name ), '" name="' . sprintf( $global_controlname_pat, 'new_set_set_name' ), '" value="" >', "\n";
-	echo '								</td>', "\n";
-	echo '								<td></td>',  "\n";
-	echo '							</tr>', "\n";
-	echo '						</table>', "\n";
+	echo '						<div>', "\n";
+	echo '							<input type="text" id="', sprintf( $global_controlid_pat, 'new_set_set_name_', $set_name ), '" name="' . sprintf( $global_controlname_pat, 'new_set_set_name' ), '" value="" >', "\n";
+	echo '						</div>', "\n";
 	echo '						<div class="bnmng-individual-page-help">', $set_name_help, '</div>', "\n";
 	echo '					</td>', "\n";
 	echo '				</tr>', "\n";
@@ -596,6 +654,11 @@ function bnmng_admin_individual_page_style() {
 	table.bnmng-individual-page th {
 		padding-left: 1em;
 	}
+	table.bnmng-individual-page th,
+	table.bnmng-individual-page td {
+		padding-top: .5em;
+		padding-bottom: .5em;
+	}
 	table.bnmng-individual-page table {
 		border: none;
 	}
@@ -603,6 +666,7 @@ function bnmng_admin_individual_page_style() {
 		padding: 0 1px .5px 1px;
 	}
 	table.bnmng-individual-page textarea {
+		resize:both;
 	}
 </style>
 	<?php
@@ -721,6 +785,27 @@ function bnmng_admin_individual_page_script() {
 				document.execCommand('copy');
 				document.body.removeChild( shortcode_textarea );
 		} );
+	}
+
+	var help_divs  = document.getElementsByClassName("bnmng-individual-page-help");
+	for ( var i = 0; i < help_divs.length; i++ ) {
+		help_divs[ i ].style.display = "none";
+	}
+
+	var help_buttons  = document.getElementsByName("toggle_help");
+	for ( var i = 0; i < help_buttons.length; i++ ) {
+		help_buttons[ i ].addEventListener( "click", function( event ) {
+			event.preventDefault();
+			var help_divs = document.getElementById( "div_set_" + this.dataset.key ).getElementsByClassName("bnmng-individual-page-help") ;
+			for ( var i = 0; i < help_divs.length; i++ ) {
+				if ( "none" == help_divs[ i ].style.display ) {
+					help_divs[ i ].style.display = "block";
+				} else {
+					help_divs[ i ].style.display = "none";
+				}
+			}
+		} );
+		
 	}
 
 	
